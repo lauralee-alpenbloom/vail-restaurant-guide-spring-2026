@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vail Spring 2026 Restaurant Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #ffffff;
+    color: #111111;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 0 40px 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    border-bottom: 3px solid #111;
+    padding: 20px 0 14px 0;
+    margin-bottom: 16px;
+  }
+  .header-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #111;
+    margin-bottom: 3px;
+  }
+  .header-sub {
+    font-size: 11px;
+    font-weight: 400;
+    font-style: italic;
+    color: #666;
+  }
+
+  /* ── DATE CONTROL ── */
+  .date-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    padding: 9px 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .date-bar:hover { background: #eeeeee; }
+  .date-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #888;
+    flex-shrink: 0;
+  }
+  .date-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: #111;
+    flex: 1;
+  }
+  .date-edit {
+    font-size: 10px;
+    font-style: italic;
+    color: #999;
+    flex-shrink: 0;
+  }
+
+  /* Date picker modal */
+  .modal-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 60px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border: 2px solid #111;
+    padding: 20px;
+    width: 280px;
+    max-width: 90%;
+  }
+  .modal-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    color: #111;
+  }
+  .modal input[type="date"] {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #ccc;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #111;
+    margin-bottom: 12px;
+    outline: none;
+  }
+  .modal input[type="date"]:focus { border-color: #111; }
+  .modal-buttons { display: flex; gap: 8px; }
+  .modal-btn {
+    flex: 1;
+    padding: 9px;
+    border: 1px solid #111;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    background: #fff;
+    color: #111;
+  }
+  .modal-btn.primary { background: #111; color: #fff; }
+  .modal-btn:hover { opacity: 0.8; }
+
+  /* ── SEARCH ── */
+  .search-wrap { margin-bottom: 10px; position: relative; }
+  .search-wrap input {
+    width: 100%;
+    padding: 9px 34px 9px 11px;
+    border: 1px solid #ccc;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #111;
+    outline: none;
+    background: #fff;
+  }
+  .search-wrap input:focus { border-color: #111; }
+  .search-clear {
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    font-size: 16px; color: #aaa;
+    cursor: pointer; display: none;
+    line-height: 1;
+  }
+  .search-clear.visible { display: block; }
+  .search-clear:hover { color: #111; }
+
+  /* ── FILTERS ── */
+  .filters {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 5px 12px;
+    border: 1px solid #ccc;
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #666;
+    cursor: pointer;
+  }
+  .filter-btn:hover { border-color: #111; color: #111; }
+  .filter-btn.active { background: #111; border-color: #111; color: #fff; }
+
+  /* ── OPEN NOW TOGGLE ── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    padding: 9px 0;
+    margin-bottom: 12px;
+  }
+  .toggle-text-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #111;
+  }
+  .toggle-text-sub {
+    font-size: 10px;
+    font-style: italic;
+    color: #888;
+    margin-top: 1px;
+  }
+  .toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: #ddd;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle-track::before {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    left: 3px; top: 3px;
+    background: #fff;
+    transition: transform 0.2s;
+  }
+  input:checked + .toggle-track { background: #111; }
+  input:checked + .toggle-track::before { transform: translateX(18px); }
+
+  /* ── RESULTS BAR ── */
+  .results-bar { margin-bottom: 8px; }
+  .results-count {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #888;
+  }
+
+  /* ── CARDS ── */
+  .restaurant-card {
+    border-bottom: 1px solid #e8e8e8;
+    padding: 11px 0;
+  }
+  .restaurant-card:first-child { border-top: 1px solid #e8e8e8; }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+  .card-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+    line-height: 1.3;
+  }
+  .status-pill {
+    flex-shrink: 0;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    margin-top: 2px;
+    white-space: nowrap;
+  }
+  .status-open   { background: #111; color: #fff; }
+  .status-closed { background: #fff; color: #bbb; border: 1px solid #ddd; }
+  .status-unknown{ background: #fff; color: #888; border: 1px solid #ddd; }
+
+  .card-hours {
+    font-size: 12px;
+    font-style: italic;
+    color: #555;
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+  .card-note {
+    font-size: 10px;
+    font-weight: 700;
+    color: #888;
+    margin-bottom: 5px;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .meal-tags { display: flex; gap: 3px; flex-wrap: wrap; }
+  .meal-tag {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #aaa;
+    padding: 2px 5px;
+    border: 1px solid #e0e0e0;
+  }
+  .website-link {
+    font-size: 10px;
+    font-weight: 700;
+    color: #111;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+    border-bottom: 1px solid #111;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .website-link:hover { opacity: 0.5; }
+  .no-website {
+    font-size: 9px;
+    font-style: italic;
+    color: #ccc;
+    flex-shrink: 0;
+  }
+
+  /* ── CLOSED CARD STYLE ── */
+  .card-closed .card-name { color: #999; }
+  .card-closed .card-hours { color: #bbb; }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #aaa;
+  }
+  .empty p { font-style: italic; font-size: 13px; }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 12px;
+    font-size: 10px;
+    font-style: italic;
+    color: #aaa;
+    text-align: center;
+  }
+  .footer strong { font-weight: 700; font-style: normal; color: #888; }
+
+  /* ── SQUARESPACE CONTAINER ── */
+  .vail-guide-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 660px;
+    margin: 0 auto;
+    padding: 0 4px;
+  }
+</style>
+</head>
+<body>
+<div class="vail-guide-wrap">
+
+  <div class="header">
+    <div class="header-eyebrow">Town of Vail · Spring 2026</div>
+    <h1>Restaurant Hours Guide</h1>
+    <div class="header-sub">Hours subject to change — call ahead to confirm</div>
+  </div>
+
+  <!-- DATE BAR -->
+  <div class="date-bar" onclick="openDateModal()">
+    <span class="date-label">Showing</span>
+    <span class="date-value" id="dateDisplay">—</span>
+    <span class="date-edit">tap to change ›</span>
+  </div>
+
+  <!-- DATE MODAL -->
+  <div class="modal-overlay" id="dateModal">
+    <div class="modal">
+      <div class="modal-title">Select a date</div>
+      <input type="date" id="datePicker" />
+      <div class="modal-buttons">
+        <button class="modal-btn" onclick="jumpToToday()">Today</button>
+        <button class="modal-btn primary" onclick="applyDate()">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="Search restaurants…" oninput="filterAll()" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="search-clear" id="clearBtn" onclick="clearSearch()">×</button>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="setMeal('all',this)">All</button>
+    <button class="filter-btn" onclick="setMeal('morning',this)">Morning</button>
+    <button class="filter-btn" onclick="setMeal('afternoon',this)">Afternoon</button>
+    <button class="filter-btn" onclick="setMeal('evening',this)">Evening</button>
+  </div>
+
+  <!-- OPEN NOW TOGGLE -->
+  <div class="toggle-row">
+    <div>
+      <div class="toggle-text-label">Open Now Only</div>
+      <div class="toggle-text-sub" id="toggleSub">Showing all restaurants</div>
+    </div>
+    <label class="toggle-switch">
+      <input type="checkbox" id="openNowToggle" onchange="filterAll()">
+      <span class="toggle-track"></span>
+    </label>
+  </div>
+
+  <!-- RESULTS COUNT -->
+  <div class="results-bar">
+    <div class="results-count"><span id="countNum">0</span> restaurants</div>
+  </div>
+
+  <!-- LIST -->
+  <div id="restaurantList"></div>
+
+  <div class="footer">
+    <strong>Note:</strong> Hours are from the Town of Vail Spring 2026 guide and may change without notice. Always call ahead.
+  </div>
+
+</div><!-- end .vail-guide-wrap -->
+
+<script>
+// ─────────────────────────────────────────────
+// RESTAURANT DATA
+// Verified line-by-line against Town of Vail Spring 2026 PDF
+// ─────────────────────────────────────────────
+const restaurants = [
+
+  // ── MORNING ──
+  {name:"AlpenDogs",meals:["morning","afternoon","evening"],hours:"Daily 11am–9pm",closures:"Closed 4/13–5/21",url:"https://www.alpendogs.com"},
+  {name:"The Belle",meals:["morning"],hours:"Daily 7am–11am",closures:"Closed 3/28–4/13 & 4/19–5/19",url:null},
+  {name:"Big Bear Bistro",meals:["morning","afternoon"],hours:"Daily 8am–5pm",closures:null,url:"https://www.bigbearbistro.com"},
+  {name:"Casa Jalisco",meals:["morning","afternoon","evening"],hours:"Mon–Thurs 12pm–9pm · Fri–Sun 10:30am–9pm",closures:null,url:"https://www.casajaliscovail.com"},
+  {name:"Cucina",meals:["morning"],hours:"Breakfast daily 3/27–4/19; Dinner & Bar closed for season",closures:"Closed 4/20–June (TBD)",url:"https://www.vail.com/plan-your-trip/dining/cucina.aspx"},
+  {name:"Del Toro Mexican Restaurant",meals:["morning","afternoon","evening"],hours:"Daily 10:30am–close",closures:null,url:"https://www.deltorovat.com"},
+  {name:"Delizioso",meals:["morning","afternoon"],hours:"Daily 8am–5pm",closures:null,url:null},
+  {name:"First Chair",meals:["morning","afternoon","evening"],hours:"Daily 8am–8pm",closures:"Closed 4/20–5/21",url:null},
+  {name:"Gessner – Grand Hyatt",meals:["morning","afternoon","evening"],hours:"Breakfast 7–11am · Lunch 12–5pm · Dinner 5–9pm · Bar Mon–Thurs & Sun 11am–11pm, Fri/Sat 11am–12am",closures:"Closed 4/20–4/25; multiple closures — call to confirm",url:null},
+  {name:"Gorsuch Ski Cafe",meals:["morning","afternoon"],hours:"Daily 8am–7pm; 8am–6pm beginning 4/20",closures:null,url:null},
+  {name:"Joe's Famous Deli",meals:["morning","afternoon"],hours:"Daily 8am–5pm",closures:null,url:null},
+  {name:"Les Delices de France",meals:["morning","afternoon"],hours:"Daily 8am–2:30pm",closures:"Closed 4/27–5/8",url:null},
+  {name:"Little Diner",meals:["morning","afternoon"],hours:"Daily 8am–2pm",closures:null,url:null},
+  {name:"Loaded Joe's",meals:["morning","afternoon","evening"],hours:"Daily 7am–8pm",closures:null,url:null},
+  {name:"Ludwig's – The Sonnenalp",meals:["morning"],hours:"Mon–Sat 7am–11am · Sun 7am–12pm",closures:null,url:"https://www.sonnenalp.com/dining/ludwigs"},
+  {name:"Margie's Haas – The Hythe",meals:["morning"],hours:"Daily 6:30am–11am",closures:null,url:"https://www.thehythevail.com/dining"},
+  {name:"McDonald's",meals:["morning","afternoon","evening"],hours:"Daily 6am–11pm",closures:null,url:"https://www.mcdonalds.com"},
+  {name:"Qdoba",meals:["morning","afternoon","evening"],hours:"Mon–Sat 8am–10pm · Sun 8am–9pm",closures:null,url:"https://www.qdoba.com"},
+  {name:"Restaurant Sushi – City Market",meals:["morning","afternoon","evening"],hours:"Daily 6am–10pm (City Market hours)",closures:null,url:null},
+  {name:"Rimini",meals:["morning","afternoon","evening"],hours:"Daily 8am–9pm; closes at noon 4/12, reopens end of May (TBA)",closures:"Closing noon 4/12; reopens end of May (TBA)",url:"https://www.riminivail.com"},
+  {name:"Rocky Mountain Chocolate Factory",meals:["morning","afternoon","evening"],hours:"Daily 10am–10pm",closures:null,url:"https://www.rmcf.com"},
+  {name:"Speyside Cafe – The Four Seasons",meals:["morning","afternoon"],hours:"Closed; Will reopen 7/1",closures:"Closed for season; reopens 7/1",url:"https://www.fourseasons.com/vail"},
+  {name:"Starbucks – City Market",meals:["morning","afternoon"],hours:"Daily 6am–7pm",closures:null,url:null},
+  {name:"Starbucks – Safeway",meals:["morning","afternoon","evening"],hours:"Daily 6am–8pm",closures:null,url:null},
+  {name:"Starbucks – Vail Health Hospital",meals:["morning","afternoon"],hours:"Mon–Fri 7am–6pm · Sat–Sun 7am–2pm",closures:null,url:null},
+  {name:"Subway",meals:["morning","afternoon","evening"],hours:"Daily 8am–9pm",closures:null,url:"https://www.subway.com"},
+  {name:"Tavern on the Square",meals:["morning","afternoon","evening"],hours:"See closure note",closures:"Closed 3/27–6/4",url:null},
+  {name:"Tavernetta – Four Seasons",meals:["morning","evening"],hours:"Breakfast 7–11am · Dinner 4–9:30pm · Sun Brunch 10am–2pm; open thru 4/18",closures:"Open thru 4/18; property closed 4/22–5/19; Reopens 5/20",url:"https://www.fourseasons.com/vail"},
+  {name:"Treff Cafe – The Sonnenalp",meals:["morning","afternoon","evening"],hours:"Daily 8am–7pm thru 4/5; 4/6–6/9 daily 8am–4pm; from 6/10 daily 8am–7pm",closures:null,url:"https://www.sonnenalp.com"},
+  {name:"Two Arrows Coffee",meals:["morning","afternoon"],hours:"Daily 7am–10pm (weekdays), later on weekends; 8am–5pm 5/8–5/10; 8am–5pm daily from 5/15; full hours from 5/22",closures:"Closed 4/14–5/7",url:null},
+  {name:"Unravel Coffee – Gravity Haus",meals:["morning","afternoon"],hours:"Daily 7am–2pm",closures:"Closed 4/19–5/14",url:null},
+  {name:"Vaqueros Mexican Restaurant",meals:["morning","afternoon","evening"],hours:"Tues–Sat 10:30am–10pm · Sun/Mon 10:30am–9pm",closures:null,url:"https://www.vaquerosvail.com"},
+  {name:"Vintage",meals:["morning","afternoon","evening"],hours:"Thurs–Mon 8:30am–2pm & 5–9pm; Fri–Sun 8:30am–2pm after reopening",closures:"Closed 4/13–5/7; then Fri–Sun 8:30am–2pm until summer",url:"https://www.vintagevail.com"},
+  {name:"Westside Cafe",meals:["morning","afternoon","evening"],hours:"Daily 7am–3pm; dinner thru 4/18, resumes 5/4",closures:null,url:"https://www.westsidecafevail.com"},
+  {name:"Yeti's Grind – Solaris",meals:["morning","afternoon"],hours:"Mon–Fri 7:30am–6pm · Sat/Sun 7:30am–7pm; 4/20–6/3: 9am–5pm",closures:null,url:"https://www.yetisgrind.com"},
+  {name:"Yeti's Grind – West Vail",meals:["morning","afternoon"],hours:"Mon–Fri 7:30am–6pm · Sat/Sun 7:30am–7pm; 4/20–6/3: 9am–5pm",closures:null,url:"https://www.yetisgrind.com"},
+
+  // ── AFTERNOON (not already listed above) ──
+  {name:"10th Mountain Whiskey",meals:["afternoon","evening"],hours:"Daily 1pm–9pm; No off-season closure",closures:null,url:"https://www.10thmountainwhiskey.com"},
+  {name:"Alpenrose",meals:["afternoon","evening"],hours:"Tues–Sun 11:30am–close",closures:"Closed 4/6–5/14",url:"https://www.alpenrosevail.com"},
+  {name:"Alpine Pizza",meals:["afternoon","evening"],hours:"Tues–Sat 11:30am–8pm",closures:null,url:"https://www.alpinepizzavail.com"},
+  {name:"Altitude Bar & Grill",meals:["afternoon","evening"],hours:"Daily 4pm–10pm",closures:"Closed 4/20–TBD (renovations)",url:null},
+  {name:"Annapurna",meals:["afternoon","evening"],hours:"Lunch 12–2:30pm · Dinner 4:30–9pm",closures:"Closed 4/13 (property remodel)",url:null},
+  {name:"Archetype Distillery",meals:["afternoon","evening"],hours:"Call for current hours: 970.333.6565",closures:null,url:"https://www.archetypedistillery.com"},
+  {name:"Avanti F&B",meals:["afternoon","evening"],hours:"Daily 12pm–9pm",closures:"Closed 4/19–5/21",url:"https://www.avantifb.com"},
+  {name:"Barrio Social",meals:["afternoon","evening"],hours:"Daily 3pm–close",closures:"Closed 4/6–5/27",url:"https://www.barriosocialvail.com"},
+  {name:"Bart & Yeti's",meals:["afternoon","evening"],hours:"Daily 11am–8pm; 4/20–5/21: 11am–3pm food, bar only 3–6pm",closures:"4/20–5/21: food till 3pm, bar only after",url:"https://www.bartandyetis.com"},
+  {name:"Blu Cow",meals:["afternoon","evening"],hours:"Closing indefinitely 4/13",closures:"Closed indefinitely — looking for new location",url:null},
+  {name:"Blue Moose Pizza",meals:["afternoon","evening"],hours:"Daily 11am–9pm",closures:"Closed 4/18–5/21",url:"https://www.bluemoosepizza.com"},
+  {name:"Bully Ranch – The Sonnenalp",meals:["afternoon","evening"],hours:"Daily 11am–10pm",closures:null,url:"https://www.sonnenalp.com/dining/bully-ranch"},
+  {name:"Chicago Pizza",meals:["afternoon","evening"],hours:"Lunch Mon–Fri 11am–1pm · Dinner daily 5–8pm",closures:"Closed 4/12–5/21",url:"https://www.chicagopizzavail.com"},
+  {name:"Deca + Bol",meals:["afternoon","evening"],hours:"See closure note",closures:"Closed 4/18–5/31",url:"https://www.decaandbolvail.com"},
+  {name:"El Segundo",meals:["afternoon","evening"],hours:"Daily 11am–9pm; from 4/13: 12–8pm thru 5/21",closures:"Closed 4/19 & 5/18",url:null},
+  {name:"Fireside Lounge – Grand Hyatt",meals:["afternoon","evening"],hours:"Daily 2pm–10pm; no food service 4/26–5/2",closures:"Closed 4/20–4/25; multiple closures — call to confirm",url:null},
+  {name:"The Fitz",meals:["afternoon","evening"],hours:"Daily 12–9pm; closed Tue/Wed 4/7–4/12",closures:"Closed 4/13–5/20; Reopens 5/21",url:null},
+  {name:"Gambit – The Sebastian",meals:["afternoon","evening"],hours:"Daily 12–10pm (food till 9pm)",closures:"Property closed 4/18–5/20; Reopens 5/21",url:null},
+  {name:"Garfinkel's",meals:["afternoon","evening"],hours:"Daily 12–8pm; closes when mountain closes until Memorial Day",closures:"Closes with mountain; reopens Memorial Day weekend",url:"https://www.garfinkelsvail.com"},
+  {name:"Grill on the Gore",meals:["afternoon","evening"],hours:"Daily 11am–7pm beginning 5/15",closures:"Closed until 5/15",url:null},
+  {name:"Haagen-Dazs",meals:["afternoon","evening"],hours:"Daily 11am–6pm",closures:"Closed 4/9–5/21",url:null},
+  {name:"Joy Sushi",meals:["afternoon","evening"],hours:"Mon–Sat 11am–9pm · Sun 12–9pm",closures:null,url:null},
+  {name:"La Bottega",meals:["afternoon","evening"],hours:"Daily 11am–close",closures:"Closed 4/11–6/3",url:null},
+  {name:"La Cantina",meals:["afternoon","evening"],hours:"Daily 11:30am–8pm",closures:null,url:null},
+  {name:"Local Joe's Pizza",meals:["afternoon","evening"],hours:"Daily 11am–close",closures:null,url:null},
+  {name:"Lost Heaven",meals:["afternoon","evening"],hours:"Thurs–Tues 4–8:30pm",closures:null,url:null},
+  {name:"May Palace",meals:["afternoon","evening"],hours:"Daily 11:30am–9:30pm",closures:null,url:null},
+  {name:"Mountain Standard",meals:["afternoon","evening"],hours:"Daily 11:30am–10pm",closures:"Closed 5/3–5/20; reopens dinner 5/21",url:"https://www.mountainstandard.com"},
+  {name:"Pazzo's Pizzeria",meals:["afternoon","evening"],hours:"Daily 11am–close",closures:"Closed 4/25–5/24",url:"https://www.pazzospizzeria.com"},
+  {name:"Pepi's",meals:["afternoon","evening"],hours:"Daily 11:30am–close",closures:"Closing after lunch 4/19; reopens 5/15",url:"https://www.pepisvail.com"},
+  {name:"Red Lion Restaurant",meals:["afternoon","evening"],hours:"Daily 11am–close",closures:"Closed 4/12–5/21",url:"https://www.redlionvail.com"},
+  {name:"Revel Lounge – The Hythe",meals:["afternoon","evening"],hours:"Daily 11:30am–11pm",closures:null,url:"https://www.thehythevail.com/dining"},
+  {name:"Root & Flower Wine Bar",meals:["afternoon","evening"],hours:"Daily 2pm–close; 4/12–Memorial Day: Wed–Sat 4–10pm (closed Sun–Tues)",closures:null,url:"https://www.rootandflowervail.com"},
+  {name:"Sundae",meals:["afternoon","evening"],hours:"Fri/Sat 11am–10pm · Sun–Thurs 11am–9pm",closures:null,url:null},
+  {name:"Sweet Basil",meals:["afternoon","evening"],hours:"Mon/Tues 3pm–close · Wed–Sun 11:30am–close",closures:"Closed 4/15–5/7; reopens dinner 5/8",url:"https://www.sweetbasil-vail.com"},
+  {name:"The Remedy – Four Seasons",meals:["afternoon","evening"],hours:"Lunch 12–5pm · Dinner 5–9:30pm · Bar 11am–11pm; open thru 4/19",closures:"Open thru 4/19; property closed 4/22–5/19; Reopens 5/20",url:"https://www.fourseasons.com/vail/dining/restaurants/the_remedy"},
+  {name:"Up the Creek",meals:["afternoon","evening"],hours:"Daily 12–9pm",closures:"Closed 4/12–5/9 (construction in area)",url:"https://www.upthecreekvail.com"},
+  {name:"Vail Brewing Company",meals:["afternoon","evening"],hours:"Mon–Wed 12–8pm · Thurs–Sun 11am–10pm",closures:null,url:"https://www.vailbrewingco.com"},
+  {name:"Vail Chophouse",meals:["afternoon","evening"],hours:"Daily 11am–9pm",closures:"Closed 4/13–5/21",url:"https://www.vailchophouse.com"},
+  {name:"Vendetta's",meals:["afternoon","evening"],hours:"Daily 11am–close",closures:"Closed 4/20 for 2 weeks",url:"https://www.vendettas.com"},
+
+  // ── EVENING (not already listed above) ──
+  {name:"Almresi",meals:["evening"],hours:"Wed–Sun 3–10pm",closures:"Closed 4/6–TBD",url:"https://www.almresivail.com"},
+  {name:"Après Cafe",meals:["evening"],hours:"Thurs–Mon 5–9pm",closures:"Closed 4/13–6/3",url:null},
+  {name:"Bad Kitty Lounge",meals:["evening"],hours:"Daily 5pm–close",closures:"Closed 4/7–4/14",url:null},
+  {name:"Chasing Rabbits",meals:["evening"],hours:"Hours TBA",closures:"Closed 4/17–6/3",url:null},
+  {name:"Elway's",meals:["evening"],hours:"Daily 5–9:30pm; Thurs–Sun only when mountain closes",closures:null,url:"https://www.elways.com/vail"},
+  {name:"The George",meals:["evening"],hours:"Daily 5pm–close",closures:null,url:null},
+  {name:"Kings Club – The Sonnenalp",meals:["evening"],hours:"Daily 5–11pm",closures:"Closed 4/20–6/5; open 6/6–6/7; Wed–Sun from 6/10",url:"https://www.sonnenalp.com"},
+  {name:"La Nonna",meals:["evening"],hours:"Mon–Sat 5pm–close",closures:"Closed 4/16–6/2",url:null},
+  {name:"La Tour",meals:["evening"],hours:"Daily 5–9:30pm",closures:"Closed 4/15–6/17",url:null},
+  {name:"Lancelot",meals:["evening"],hours:"Call for current hours: 970.476.5828",closures:null,url:null},
+  {name:"Left Bank",meals:["evening"],hours:"Mon–Sat 3pm–close",closures:"Closed 4/12–6/10",url:null},
+  {name:"Makoto – Grand Hyatt",meals:["evening"],hours:"Thurs–Sun 5–9pm",closures:"Closed 5/1–5/21",url:null},
+  {name:"Matsuhisa",meals:["evening"],hours:"Daily 5–9pm",closures:"Closed 4/13",url:null},
+  {name:"Montauk Seafood Grill",meals:["evening"],hours:"Daily 4–9:30pm",closures:"Closed 4/19–5/7",url:"https://www.montaukvail.com"},
+  {name:"Osakis Sushi & Japanese",meals:["evening"],hours:"Call for current hours: 970.476.0977",closures:null,url:null},
+  {name:"Pivot 62 – Highline Hotel",meals:["evening"],hours:"Thurs–Sun 5–9pm",closures:null,url:"https://www.highlinevail.com/dining"},
+  {name:"Ridge + River – Manor Vail",meals:["evening"],hours:"Wed–Sun 5:30–9pm",closures:"Closed 4/6–6/11",url:"https://www.manorvail.com/dining"},
+  {name:"Russell's",meals:["evening"],hours:"Daily 5–10pm",closures:"Closed 4/12–6/4",url:"https://www.russellsvail.com"},
+  {name:"Slope Room – The Hythe",meals:["evening"],hours:"Daily 5–10pm",closures:"Closed 4/11–5/14",url:"https://www.thehythevail.com/dining"},
+  {name:"Swiss Chalet",meals:["evening"],hours:"Daily 4:30–10pm",closures:"Closed 4/20–6/9; Wed–Sun from 6/10",url:null},
+  {name:"Yama Sushi",meals:["evening"],hours:"Daily 5pm–close",closures:"Closed 4/12–beginning of June",url:null},
+];
+
+// ─────────────────────────────────────────────
+// CLOSURE LOGIC
+// ─────────────────────────────────────────────
+function parseClosureRanges(str) {
+  if (!str) return [];
+  const ranges = [];
+  const pat = /(\d{1,2})\/(\d{1,2})[–\-](\d{1,2})\/(\d{1,2})/g;
+  let m;
+  while ((m = pat.exec(str)) !== null) {
+    ranges.push({
+      start: new Date(2026, +m[1]-1, +m[2]),
+      end:   new Date(2026, +m[3]-1, +m[4])
+    });
+  }
+  return ranges;
+}
+
+function isPermanentlyClosed(r) {
+  if (!r.closures) return false;
+  const c = r.closures.toLowerCase();
+  return c.includes('indefinitely') || c.includes('looking for new location') || c.includes('closed for season');
+}
+
+function isClosedOnDate(r, date) {
+  if (isPermanentlyClosed(r)) return true;
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  // Parse date ranges from closure string
+  for (const {start, end} of parseClosureRanges(r.closures || '')) {
+    if (d >= start && d <= end) return true;
+  }
+
+  // Per-restaurant special cases not capturable by simple date ranges
+  switch (r.name) {
+    case "The Belle":
+      if (d >= new Date(2026,2,28) && d <= new Date(2026,3,13)) return true;
+      if (d >= new Date(2026,3,19) && d <= new Date(2026,4,19)) return true;
+      break;
+    case "Pepi's":
+      // Closing after lunch 4/19, reopens 5/15
+      if (d >= new Date(2026,3,19) && d < new Date(2026,4,15)) return true;
+      break;
+    case "Vendetta's":
+      // Closed 4/20 for 2 weeks = 4/20–5/3
+      if (d >= new Date(2026,3,20) && d <= new Date(2026,4,3)) return true;
+      break;
+    case "Rimini":
+      // Closes noon 4/12, reopens end of May
+      if (d >= new Date(2026,3,12) && d <= new Date(2026,4,31)) return true;
+      break;
+    case "Garfinkel's":
+      // Closes with mountain ~4/20, reopens Memorial Day 5/25
+      if (d >= new Date(2026,3,20) && d < new Date(2026,4,25)) return true;
+      break;
+    case "Tavern on the Square":
+      if (d >= new Date(2026,2,27) && d <= new Date(2026,5,4)) return true;
+      break;
+    case "Sweet Basil":
+      if (d >= new Date(2026,3,15) && d <= new Date(2026,4,7)) return true;
+      break;
+    case "Two Arrows Coffee":
+      if (d >= new Date(2026,3,14) && d <= new Date(2026,4,7)) return true;
+      break;
+    case "Unravel Coffee – Gravity Haus":
+      if (d >= new Date(2026,3,19) && d <= new Date(2026,4,14)) return true;
+      break;
+    case "La Nonna":
+      if (d >= new Date(2026,3,16) && d <= new Date(2026,5,2)) return true;
+      break;
+    case "La Tour":
+      if (d >= new Date(2026,3,15) && d <= new Date(2026,5,17)) return true;
+      break;
+    case "Left Bank":
+      if (d >= new Date(2026,3,12) && d <= new Date(2026,5,10)) return true;
+      break;
+    case "Matsuhisa":
+      if (d.getTime() === new Date(2026,3,13).getTime()) return true;
+      break;
+    case "Kings Club – The Sonnenalp":
+      if (d >= new Date(2026,3,20) && d <= new Date(2026,5,5)) return true;
+      break;
+    case "Gambit – The Sebastian":
+      if (d >= new Date(2026,3,18) && d <= new Date(2026,4,20)) return true;
+      break;
+    case "Grill on the Gore":
+      // Closed until 5/15
+      if (d < new Date(2026,4,15)) return true;
+      break;
+    case "Yama Sushi":
+      // Closed 4/12–beginning of June — treat as 4/12–6/1
+      if (d >= new Date(2026,3,12) && d <= new Date(2026,5,1)) return true;
+      break;
+    case "AlpenDogs":
+      if (d >= new Date(2026,3,13) && d <= new Date(2026,4,21)) return true;
+      break;
+    case "Vintage":
+      if (d >= new Date(2026,3,13) && d <= new Date(2026,4,7)) return true;
+      break;
+  }
+
+  // Four Seasons properties: property closed 4/22–5/19
+  if (r.closures && r.closures.includes('4/22') && r.closures.includes('5/19')) {
+    if (d >= new Date(2026,3,22) && d <= new Date(2026,4,19)) return true;
+  }
+
+  // Annapurna: closed 4/13 onward (remodel)
+  if (r.name === 'Annapurna' && d >= new Date(2026,3,13)) return true;
+
+  return false;
+}
+
+function getStatus(r, date) {
+  if (isClosedOnDate(r, date)) return 'closed';
+  const c = (r.closures || '').toLowerCase();
+  const h = (r.hours || '').toLowerCase();
+  if (c.includes('tbd') || h.includes('call for') || h.includes('hours tba') || c.includes('call to confirm')) return 'unknown';
+  return 'open';
+}
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let selectedDate = new Date();
+let activeMeal = 'all';
+
+function formatDateDisplay(d) {
+  return d.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+}
+function formatDateInput(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function updateDateDisplay() {
+  document.getElementById('dateDisplay').textContent = formatDateDisplay(selectedDate);
+}
+function openDateModal() {
+  document.getElementById('datePicker').value = formatDateInput(selectedDate);
+  document.getElementById('dateModal').classList.add('open');
+}
+function closeDateModal() {
+  document.getElementById('dateModal').classList.remove('open');
+}
+function applyDate() {
+  const val = document.getElementById('datePicker').value;
+  if (val) {
+    const [y,m,d] = val.split('-').map(Number);
+    selectedDate = new Date(y, m-1, d);
+    updateDateDisplay();
+    filterAll();
+  }
+  closeDateModal();
+}
+function jumpToToday() {
+  selectedDate = new Date();
+  document.getElementById('datePicker').value = formatDateInput(selectedDate);
+  updateDateDisplay();
+  filterAll();
+  closeDateModal();
+}
+document.getElementById('dateModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDateModal();
+});
+
+function setMeal(meal, btn) {
+  activeMeal = meal;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterAll();
+}
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('clearBtn').classList.remove('visible');
+  filterAll();
+}
+
+function filterAll() {
+  const query = document.getElementById('searchInput').value.trim().toLowerCase();
+  const openOnly = document.getElementById('openNowToggle').checked;
+  document.getElementById('clearBtn').classList.toggle('visible', query.length > 0);
+  document.getElementById('toggleSub').textContent = openOnly
+    ? `Filtered for ${formatDateDisplay(selectedDate)}`
+    : 'Showing all restaurants';
+
+  const filtered = restaurants.filter(r => {
+    if (activeMeal !== 'all' && !r.meals.includes(activeMeal)) return false;
+    if (query && !r.name.toLowerCase().includes(query)) return false;
+    if (openOnly && getStatus(r, selectedDate) !== 'open') return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    const order = {open:0, unknown:1, closed:2};
+    const diff = order[getStatus(a,selectedDate)] - order[getStatus(b,selectedDate)];
+    return diff !== 0 ? diff : a.name.localeCompare(b.name);
+  });
+
+  document.getElementById('countNum').textContent = filtered.length;
+  const list = document.getElementById('restaurantList');
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty"><p>No restaurants match your filters.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => {
+    const status = getStatus(r, selectedDate);
+    const label = status === 'open' ? 'Open' : status === 'closed' ? 'Closed' : 'Call First';
+    const note = r.closures ? `<div class="card-note">↳ ${r.closures}</div>` : '';
+    const tags = r.meals.map(m => `<span class="meal-tag">${m}</span>`).join('');
+    const web = r.url
+      ? `<a class="website-link" href="${r.url}" target="_blank" rel="noopener noreferrer">Website ↗</a>`
+      : `<span class="no-website">No website</span>`;
+    return `<div class="restaurant-card ${status==='closed'?'card-closed':''}">
+      <div class="card-top">
+        <div class="card-name">${r.name}</div>
+        <span class="status-pill status-${status}">${label}</span>
+      </div>
+      <div class="card-hours">${r.hours}</div>
+      ${note}
+      <div class="card-footer"><div class="meal-tags">${tags}</div>${web}</div>
+    </div>`;
+  }).join('');
+}
+
+updateDateDisplay();
+filterAll();
+</script>
+</body>
+</html>
